@@ -68,7 +68,7 @@ int main()
            */
            
            
-        #pragma omp for schedule (dynamic,100000) 
+        #pragma omp for schedule (dynamic,10000) 
         for( long int i = 0 ; i <= Array_Size ; ++i )
         {
             Final_Parallel_Sum += Array[i] ;
