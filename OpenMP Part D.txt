@@ -1,0 +1,76 @@
+// OMP Single, OMP Single NoWait, OMP Master
+#include<omp.h>
+#include<stdio.h>
+
+int main()
+{
+    /* 
+       Main is executed by the master thread having thread id -> 0 by default ( we can change the master thread but 
+       by default the thread with id 0 is the master thread)
+    */
+    #pragma omp parallel 
+    {
+        int Thread_Id = omp_get_thread_num();
+        // some code
+        // some code
+        // some code
+        // some code
+
+        /* 
+           Any thread of the parallel region can execute this "single" block. The thread that reaches here first will execute the single 
+           block it can be any thread (master, or any xyz thread). No other threads will be allowed to execute this block only 
+           the one that reaches first at this point will execute the single block. 
+
+           Note: A barrier is added by the compiler implicitly after each single block and all other threads will meet at that point and then 
+           start the rest of the execution of code that is present after the barrier once all the threads are met at the barrier(meeting point).
+        */
+        #pragma omp single
+        {
+            printf("Thread # %d Executing The Single Block Because It Reached Here First Before Any Other Thread\n", Thread_Id) ;
+            // some code
+            // some code
+            // some code
+            // some code
+        }
+        // At this point (after the single block) the compiler adds this code for the wait  ---> #pragma omp barrier
+
+        #pragma omp single nowait
+        {
+            printf("Thread # %d Executing The Single NoWait Block Because It Reached Here First Before Any Other Thread\n", Thread_Id) ;
+            // some code
+            // some code
+            // some code
+            // some code
+        }
+        // No implicit addition of #pragma omp barrier by the compiler in #pragma omp single nowait directive
+        /* 
+           #pragma omp single nowait is similar to the #pragma omp single directive the only difference is that there's no implicit barrier 
+           included in #pragma omp single nowait directive and all other threads continues the rest of the execution of the code that is present
+           after the single nowait block.
+        */
+
+        #pragma omp master
+        {
+            printf("Thread # %d Executing The Master Block Because It Is The Master Thread\n", Thread_Id) ;
+            printf("A Master Thread Is A Thread That Executes The Non-Parallel Code Blocks As Well\n");
+        }
+        // At this point (after the master block) the compiler adds this code for the wait  ---> #pragma omp barrier
+        /* 
+           #pragma omp master is similar to #pragma omp single the only difference is that it is executed by the master 
+           thread only that executes the non parallel code as well with thread id 0 by default.
+        */
+        
+        
+    }
+
+    /* 
+              Output Of Above Code
+    Thread # 0 Executing The Single Block Because It Reached Here First Before Any Other Thread
+    Thread # 2 Executing The Single NoWait Block Because It Reached Here First Before Any Other Thread
+    Thread # 0 Executing The Master Block Because It Is The Master Thread
+    A Master Thread Is A Thread That Executes The Non-Parallel Code Blocks As Well
+    
+    */
+
+
+}

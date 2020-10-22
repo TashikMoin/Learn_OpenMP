@@ -1,0 +1,70 @@
+// Array Summation Using Parallel Programming
+#include<omp.h>
+#include<stdio.h>
+long int Array_Size = 1000000000 ;
+int Array[1000000000] ;
+
+int main()
+{
+    long int Final_Parallel_Sum = 0 , Sequential_Sum = 0 ;
+    for( long int i = 0 ; i < Array_Size ; ++i )
+    {
+        Array[i] = 1 ; // Each Element = 1 so that final sum should be equal to Array_Size (100000000000)
+    }
+    double Starting_Time, Ending_Time ;
+    printf("... Started Calculating The Sum Of Array ... \n") ;
+    Starting_Time = omp_get_wtime() ; // omp_get_wtime() returns the current time
+    #pragma omp parallel
+    {
+        int _TO , _FROM ; 
+        int Thread_Id = omp_get_thread_num() ;
+        int Total_Threads = omp_get_num_threads() ;
+        /* 
+        Declaring TO, FROM inside the parallel region because when we create variables inside the parallel region, the variables then are
+        treated as private by default and if we declare them outside then they will be treated as shared. For every Thread, the TO and FROM
+        Range that is the task division ranges ( summation division ranges ) are different. let say thread 0 sums from Array[0] to Array[25000000]
+        and thread 1 sums from Array[25000000] to Array[50000000] and so on... that is why we created them private because each thread will be
+        having To,From ranges different. If we calculate sum by using for loop with condition for( i = 0 ; i < size ; i++ ) then all the threads
+        will run this loop size times and there is no task distribution because all the threads are calculating the sum individually that is why
+        if we want to do the task distribution then we have to run a loop like this for(i = from ; i < to ; ++i ) in this case, from and to values
+        will be different for every thread and all the threads will run different iterations of the same loops and hence the task is now distributed
+        Let say if array size = 100 and total threads are '4' then task distribution will be done as,
+           Thread # 0  ---> Array[0] ---   Array[24]
+           Thread # 0  ---> Array[25] ---  Array[49]
+           Thread # 0  ---> Array[50] ---  Array[74]
+           Thread # 0  ---> Array[75] ---  Array[99]
+        */
+        /* By default my system's total threads are 4 because I have defined in the environmental variable to use only 4 threads by default 
+           if it is not defined that the total threads to be used in a program are ' ' then use that default values of 4 by default */
+        // Calculating TO And FROM for every thread
+        _FROM = ( Array_Size / Total_Threads ) *  Thread_Id ;
+        _TO = ( Array_Size / Total_Threads ) *  ( Thread_Id + 1 ) - 1 ; // Note: * has higher priority
+        /* 
+           Subtracting 1 becuase array index starts from 0 
+           Note: The TO and FROM values will be different for each threads.
+        */
+        long int Private_Sum_By_Each_Thread = 0 ;
+        printf("Total Threads : %d \n" , Total_Threads) ;
+        printf("Thread # %d   FROM : %d     TO : %d   \n", Thread_Id , _FROM , _TO ); 
+        for( long int i = _FROM ; i <= _TO ; ++i )
+        {
+            Private_Sum_By_Each_Thread += Array[i] ;
+        }
+
+        #pragma omp critical
+        {
+            Final_Parallel_Sum += Private_Sum_By_Each_Thread ;
+        }
+        
+    }
+    Ending_Time = omp_get_wtime() ;
+    printf("\nThe Calculated Array Sum With Proper Parallelism = %lu With Total Time : %lf \n", Final_Parallel_Sum, (Ending_Time-Starting_Time) ) ;
+    Starting_Time = omp_get_wtime() ;
+    for( long int i = 0 ; i < Array_Size ; ++i )
+    {
+        Sequential_Sum += Array[i] ;
+    }
+    Ending_Time = omp_get_wtime() ;
+    printf("\nThe Sequential Calculated Array Sum = %lu With Total Time : %lf \n", Sequential_Sum, (Ending_Time-Starting_Time) ) ;
+
+}

@@ -1,0 +1,153 @@
+// Thread Private Variables, Thread Barrier.
+#include<omp.h>
+#include<stdio.h>
+
+int Thread_Private_Variable_A = 0 , Thread_Private_Variable_B = 0 ;
+#pragma omp threadprivate(Thread_Private_Variable_A) 
+#pragma omp threadprivate(Thread_Private_Variable_B)
+/* 
+   ThreadPrivate variables retains/safe the old parallel region's value for the next/other parallel regions. Each thread will have their own
+   copies for both of these variables ( Thread_Private_Variable_A , Thread_Private_Variable_B ) and the next regions will be having the 
+   same/last modified value in the last parallel region that is why when we print values of these variables in the second parallel region with 
+   respect to their threads, we get the same/last value that was used/modified in the last executed parallel region.
+*/
+int main()
+{
+    /* We can not define a thread private variable within a scope of a function. It is always declared in the global scope */
+
+    printf("Parallel Region # 1\n\n");
+    // Parallel Region # 1
+    #pragma omp parallel 
+    {
+        int Thread_Id = omp_get_thread_num();
+        /* Each thread will be having local Thread_Id variable with their thread ids */
+        if( Thread_Id == 0)
+        {
+            Thread_Private_Variable_A = 10 ; Thread_Private_Variable_B = 10 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 1)
+        {
+            Thread_Private_Variable_A = 20 ; Thread_Private_Variable_B = 20 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 2)
+        {
+            Thread_Private_Variable_A = 30 ; Thread_Private_Variable_B = 30 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 3)
+        {
+            Thread_Private_Variable_A = 40 ; Thread_Private_Variable_B = 40 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+    }
+
+    /* 
+       Remember, since outside the parallel region the main thread ( a thread with thread_id 0 ) executes the code sequentially so in this
+       scope if we try to access the threadprivate variables, we will get the last/modified_values of the last parallel region executed but
+       those values will be of thread#0.
+    */
+
+    printf("Parallel Region # 2\n\n");
+    // Parallel Region # 2
+    #pragma omp parallel 
+    {
+        int Thread_Id = omp_get_thread_num();
+        /* Each thread will be having local Thread_Id variable with their thread ids */
+        if( Thread_Id == 0)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 1)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 2)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 3)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+    }
+
+
+
+
+    // Thread Barrier
+    /* 
+       A barrier is a directive through which we wait for all the threads to meet again at a common point after executing their code.
+       Using barrier, we can merge multiple parallel regions we do not need do define multiple parallel regions if we use barrier.
+       We can also merge the above 2 coded parallel regions into a single parallel region using barrier directive. This merging of above
+       two parallel regions can be seen below,
+    */
+    // Note: Barrier is not JOIN.
+    printf("\n\n Same Output With Single Parallel Region After Merging Of Both The Parallel Regions Using Barrier\n\n");
+
+       #pragma omp parallel 
+    {
+        int Thread_Id = omp_get_thread_num();
+        /* Each thread will be having local Thread_Id variable with their thread ids */
+        if( Thread_Id == 0)
+        {
+            Thread_Private_Variable_A = 10 ; Thread_Private_Variable_B = 10 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 1)
+        {
+            Thread_Private_Variable_A = 20 ; Thread_Private_Variable_B = 20 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 2)
+        {
+            Thread_Private_Variable_A = 30 ; Thread_Private_Variable_B = 30 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 3)
+        {
+            Thread_Private_Variable_A = 40 ; Thread_Private_Variable_B = 40 ;
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+        // The code above the barrier is same as the code we defined in the parallel region # 1 earlier
+        #pragma omp barrier 
+        /* 
+           Barrier is acting as a waiting point here so that all threads will meet here and then again start the rest of the execution together
+           when all the threads meet after executing the code before barrier
+        */
+        // The code below the barrier is same as the code we defined in the parallel region # 2 earlier
+        // This time we do not need to decalre local/private variables of parallel regions again.
+        if( Thread_Id == 0)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 1)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 2)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+
+        if( Thread_Id == 3)
+        {
+            printf("Thread_Id : %d   --->   Thread_Private_Variable_A : %d    Thread_Private_Variable_B : %d \n",Thread_Id,Thread_Private_Variable_A,Thread_Private_Variable_B );
+        }
+    }
+
+
+}

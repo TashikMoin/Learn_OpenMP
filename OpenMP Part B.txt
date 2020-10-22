@@ -1,0 +1,67 @@
+// Private And Shared Variables
+#include<omp.h>
+#include<stdio.h>
+
+int main()
+{
+    int Shared_Variable = 0 ;
+    int Private_Variable_A = 10 , Private_Variable_B = 20 ;
+    #pragma omp parallel private(Private_Variable_A) private(Private_Variable_B) shared(Shared_Variable)
+    /* 
+       Private variables are still declared outside the parallel region but they will be initialized with 0 and each thread will make a
+       local copy of these private variable that are visible to only those threads and not shared between other threads. The loop below
+       will start incrementing the values from 0 because when we write private(Shared_Variable_Name) The original initialized value by
+       which the variable was initialized outside the parallel region will be override by the private keyword and new local variables
+       with initial value '0' are allocated for each thread in their local scope/stack.
+       
+       shared(Shared_Variable_Name) <-- By Default ( If we use a variable that is decalared outside)
+       private(Private_Variable_Name) <-- Not By Default
+    */
+    {
+        int Thread_Id = omp_get_thread_num() ;
+        int Total_Threads = omp_get_num_threads() ; 
+        for( int i = 0 ; i < 10 ; ++i )
+        {
+            Private_Variable_A++; Private_Variable_B++; 
+            Shared_Variable++;
+            /*
+            Initial value of both Private_Variable_A, and Private_Variable_B is '0'. The values (10,20) that were initialized to these variables 
+            outside the parallel region during their declaration is not considered because the private keyword creates new variables with 
+            initial value '0' and hence the incrementation will start from 0 for both of them and not from 10,20 and each thread will increment
+            +10 and print 10 as output.
+
+            For Shared_Variable, each thread will increment it 10 times and its final value will be 40 since my system runs 4 threads as the
+            environmental variable has value of 4 so it will give 40 as output. Even if we do not use shared keyword by default all the variables
+            decalred outside the parallel region are considered as shared variables.
+            */
+            
+        }
+
+        if( Thread_Id == 0 )
+        {
+            printf("Total Threads : %d\n\n\n ", Total_Threads);
+            printf(" The Value Of Private_Variable_A And Private_Variable_B : %d  %d   By Thread_Id : %d \n",Private_Variable_A,Private_Variable_B,Thread_Id);
+        }
+        if( Thread_Id == 1 )
+        {
+            printf(" The Value Of Private_Variable_A And Private_Variable_B : %d  %d   By Thread_Id : %d \n",Private_Variable_A,Private_Variable_B,Thread_Id);
+        }
+        if( Thread_Id == 2 )
+        {
+            printf(" The Value Of Private_Variable_A And Private_Variable_B : %d  %d   By Thread_Id : %d \n",Private_Variable_A,Private_Variable_B,Thread_Id);
+        }
+        if( Thread_Id == 3 )
+        {
+            printf(" The Value Of Private_Variable_A And Private_Variable_B : %d  %d   By Thread_Id : %d \n\n",Private_Variable_A,Private_Variable_B,Thread_Id);
+        }
+        for( int i = 0 ; i< 1000000000 ; ++i ); 
+        /* 
+           Explicit wait() so that all private variable values can be printed first and then all threads will print shared value together.
+           It is possible that we may not get exact 40 as output because it is a shared variable and we might get an inconsistent value
+           because there is a possiblity let say thread # 1,2 reaches here to print the shared value however thread 3,4 are still busy 
+           incrementing the values inside the loop and therefore we may get inconsistent output. By incrementing the wait time inside the 
+           loop we can make it consistent but still there's a possibility of inconsistent output.
+        */
+        printf(" Shared Value :  %d      Using Thread_Id : %d \n", Shared_Variable,Thread_Id);
+    }
+}

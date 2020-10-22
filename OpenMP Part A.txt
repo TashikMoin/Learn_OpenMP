@@ -1,0 +1,87 @@
+#include<omp.h>
+#include<stdio.h>
+
+int main()
+{
+    int Shared_Variable = 0 ;
+    #pragma omp parallel
+    {
+        /* 
+           When we define a parallel region, some number of threads are created at this point that is the starting point of parallel region.
+           We do not know how much threads will be created it depends on the threadnum environmental variable of the system whatever the value
+           this environmental variable contains, those number of threads are created by default at the start of any parallel region.
+        */
+        int Thread_ID , Total_Threads;
+        Total_Threads = omp_get_num_threads() ; // returns the total number of threads that are currently executing the code.
+        Thread_ID = omp_get_thread_num(); // returns the thread number/thread_id of current(this) thread.
+
+        /* 
+           Whenever we declare any variable inside the parallel region, all the running threads creates a copy of all those variables in their 
+           local scopes/stack and work on them. But if we declare any variable outside the parallel region then by default it is shared between
+           all the threads that are currently executing the parallel region and we may get inconsistent/wrong output values.
+        */
+        // printf("... Executing Using Thread Id : %d      Total Threads : %d ...\n", Thread_ID , Total_Threads ) ; 
+        
+
+
+
+        // Shared Variable Inconsistent Output Example ( Race Condition )
+        if ( Thread_ID == 0 )
+        { 
+            Shared_Variable = 10 ; 
+            for( int i = 0 ; i<1000000; ++i ); 
+            /*
+               This loop is acting as a wait() function so that other threads can override the shared variable 
+               so that we can see inconsistent outputs.
+            */
+            printf("Shared Variable Value : %d Printed By Thread # %d\n", Shared_Variable , Thread_ID );
+        }
+
+        if ( Thread_ID == 1 )
+        {   
+            Shared_Variable = 20 ; 
+            for( int i = 0 ; i<1000000; ++i ); 
+            /*
+               This loop is acting as a wait() function so that other threads can override the shared variable 
+               so that we can see inconsistent outputs.
+            */
+            printf("Shared Variable Value : %d Printed By Thread # %d\n", Shared_Variable , Thread_ID ); 
+        }
+
+        if ( Thread_ID == 2 )
+        { 
+            Shared_Variable = 30 ; 
+            for( int i = 0 ; i<1000000; ++i ); 
+            /*
+               This loop is acting as a wait() function so that other threads can override the shared variable 
+               so that we can see inconsistent outputs.
+            */
+            printf("Shared Variable Value : %d Printed By Thread # %d\n", Shared_Variable , Thread_ID ); 
+        }
+
+        if ( Thread_ID == 3 )
+        { 
+            Shared_Variable = 40 ; 
+            for( int i = 0 ; i<1000000; ++i ); 
+            /*
+               This loop is acting as a wait() function so that other threads can override the shared variable 
+               so that we can see inconsistent outputs.
+            */
+            printf("Shared Variable Value : %d Printed By Thread # %d\n", Shared_Variable , Thread_ID ); 
+        }
+        /* 
+           After assigning we should get exact values that were assigned but other threads may assign/change the shared variable's value
+           and we may get unexpected/inconsistent outputs
+        */
+
+        /* 
+        
+            Inconsistent Output Of Above Code 
+        Shared Variable Value : 40 Printed By Thread # 0              ( It should print 10 but we are getting 40 )
+        Shared Variable Value : 40 Printed By Thread # 2              ( It should print 30 but we are getting 40 )
+        Shared Variable Value : 40 Printed By Thread # 3              ( It should print 40 )
+        Shared Variable Value : 40 Printed By Thread # 1              ( It should print 20 but we are getting 40 )
+
+        */
+    }
+}
