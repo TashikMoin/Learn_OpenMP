@@ -49,6 +49,21 @@ int main()
         for( long int i = _FROM ; i <= _TO ; ++i )
         {
             Private_Sum_By_Each_Thread += Array[i] ;
+            /* We created this private sum variable here for every thread so that it can do summation without any inconsistency. If we would 
+            have used the global/shared Final_Parallel_Sum variable here instead of Private_Sum_By_Each_Thread then we will not be able to see
+            consistent output because the statement,
+                Final_Parallel_Sum += Array[i] ; means that --> Final_Parallel_Sum = Final_Parallel_Sum + Array[i] ; multiple threads will
+            be writing/reading values at the same time and that is the reason we will be getting a inconsistent output. However we could have
+            used #pragma omp critical here and could have defined this statement under the critical block to avoid this problem but if we would 
+            have done that then we will not be getting efficient output it will take too long and we will be getting x3 , x4 time of the sequential
+            execution so this code will be useless the reason is, #pragma omp critical calls method called "Set and Get" that sets and reads the
+            lock variable value so in this case if would have defined the statements under the critical block, this set and get method will be called
+            Array_Size times suppose if the array size is 30000000000 so this method will be called 30000000000 due to which we will be getting
+            more and more time so we created this Private_Sum_By_Each_Thread instead to avoid the race condition instead of the critical block.
+            We defined the critical block to sum these private sum variables that can be seen below here now the set and get method will be called
+            Total_Threads times or total private variable times means 4 times because here I am executing with 4 threads this means that 
+            critical block now calls set and get only 4,5 times which is vvvvvvv less than the total array size times and we got efficient
+            output as expected */
         }
 
         #pragma omp critical
