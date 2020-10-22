@@ -14,7 +14,7 @@ int main()
     double Starting_Time, Ending_Time ;
     printf("... Started Calculating The Sum Of Array ... \n") ;
     Starting_Time = omp_get_wtime() ; // omp_get_wtime() returns the current time
-    #pragma omp parallel reduction(+: Final_Parallel_Sum)
+    #pragma omp parallel reduction(+: Final_Parallel_Sum) 
     {
         //                                 Use Of For directive
         /* 
@@ -38,8 +38,37 @@ int main()
         */
 
         printf("Total Threads : %d \n" , Total_Threads) ;
+        
+        /*                        
+                                        **Important**
+           When we use the for directive it does not mean that the nested loops are also divided within each thread only the loop
+           that has this directive will be divided within the threads. We divide those statements those loops which has more time complexities
+           while defining loops within a parallel region.
 
-        #pragma omp for
+        */
+        /* 
+           schedule(static/dynamic, chunk_size)
+           schedule keyword is used to define the chunk size that is to be fetched into the cache this chunk size will be shared within all the
+           threads executing. the higher the chunk size the more overhead we get , the smaller the chunk size the less overhead we get but making the
+           chunk size too small may give more overhead so we define a chunk size according to the total data and iterations of loop and it also
+           depends on the processor's speed that how much cycles it executes. The chunk size should not be too large or too small. 
+           Remember chunk size is shared between all the threads. OpenMP do streaming (Pre-fetching) and fetches entire blocks into the caches
+           to reduce the memory latency and the CPU do not have to fetch different varities of data again and again for every thread when we
+           define the chunk sizes it will fetch a chunk of htat size into the cache. 
+
+           This gives our code high efficiency when we do any operations on dot products where we have contiguous data allocated inside our 
+           memor so each thread has to access those continuous blocks of data so when we define a best chunk size for each iteration let say,
+           Array size -> 100000, total threads --> 3 and in each iteration,
+           Thread # 1 requires ---> 10 blocks(0-9) (30-39) (....)  <---- This is called static scheduling bcz every threads knows what blocks
+           Thread # 2 requires ---> 10 blocks(10-19) (40-49) (....)       they have to execute. If the scheduling is dynamic then which ever
+           Thread # 3 requires ---> 10 blocks(20-29) (50-69) (....)       the thread is freely available gets scheduled to process rest of the 
+                                                                          blocks of data
+           so here chunk size depends on the processor's speed and cycles we should choose the chunk size keeping the processor's speed and
+           total cycles executed / unit of time in our mind
+           */
+           
+           
+        #pragma omp for schedule (dynamic,100000) 
         for( long int i = 0 ; i <= Array_Size ; ++i )
         {
             Final_Parallel_Sum += Array[i] ;
