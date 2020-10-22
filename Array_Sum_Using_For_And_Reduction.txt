@@ -1,0 +1,72 @@
+// Array Summation With for, reduction in Parallel Programming
+#include<omp.h>
+#include<stdio.h>
+long int Array_Size = 1000000000 ;
+int Array[1000000000] ;
+
+int main()
+{
+    long int Final_Parallel_Sum = 0 , Sequential_Sum = 0 ;
+    for( long int i = 0 ; i < Array_Size ; ++i )
+    {
+        Array[i] = 1 ; // Each Element = 1 so that final sum should be equal to Array_Size (100000000000)
+    }
+    double Starting_Time, Ending_Time ;
+    printf("... Started Calculating The Sum Of Array ... \n") ;
+    Starting_Time = omp_get_wtime() ; // omp_get_wtime() returns the current time
+    #pragma omp parallel reduction(+: Final_Parallel_Sum)
+    {
+        //                                 Use Of For directive
+        /* 
+           int _TO , _FROM ; 
+           we do not require these variables anymore because OpenMP now can divide our code within the threads by itself
+           we do have to think about the division of the code anymore OpenMP will insert that old manual code by itself and we can simply
+           iterate our for loop from 0 -> n using the #pragma omp for directive
+        */
+        int Thread_Id = omp_get_thread_num() ;
+        int Total_Threads = omp_get_num_threads() ;
+                                       
+        //                                  Use Of Reduction Keyword
+        /* 
+            long int Private_Sum_By_Each_Thread = 0 ;
+            we do not even need private sum variables now we can use reduction keyword while defining the parallel region OR with the 
+            #pragma omp for directive to avoid writing the critical blocks and other code to avoid race conditions. This all will be done
+            by OpenMP itself. All we have to do is to use the reduction keyword and specify the reduction operation ( + , - , * etc ) by
+            this syntax  --> #pragma omp parallel reduction (<operator> : <variable_name>)
+            e.g 
+            #pragma omp parallel reduction(+: Final_Parallel_Sum)
+        */
+
+        printf("Total Threads : %d \n" , Total_Threads) ;
+
+        #pragma omp for
+        for( long int i = 0 ; i <= Array_Size ; ++i )
+        {
+            Final_Parallel_Sum += Array[i] ;
+            /* Private_Sum_By_Each_Thread += Array[i] ; 
+               No need of private sum variables we can use Final_Parallel_Sum directly because it is now our reduction variable with 
+               '+' as the reduction operation on it.
+            */
+        }
+
+
+        /* #pragma omp critical
+        {
+            Final_Parallel_Sum += Private_Sum_By_Each_Thread ;
+        }
+        No need of this code because we are using reduction keyword so OpenMP will handle the race condition by itself by inserting this same code.
+        */ 
+        
+    }
+    Ending_Time = omp_get_wtime() ;
+    printf("\nThe Calculated Array Sum With Proper Parallelism = %lu With Total Time : %lf \n", Final_Parallel_Sum, (Ending_Time-Starting_Time) ) ;
+
+    Starting_Time = omp_get_wtime() ;
+    for( long int i = 0 ; i < Array_Size ; ++i )
+    {
+        Sequential_Sum += Array[i] ;
+    }
+    Ending_Time = omp_get_wtime() ;
+    printf("\nThe Sequential Calculated Array Sum = %lu With Total Time : %lf \n", Sequential_Sum, (Ending_Time-Starting_Time) ) ;
+
+}
