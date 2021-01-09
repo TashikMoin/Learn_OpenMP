@@ -60,7 +60,7 @@ int main()
            It is possible that we may not get exact 40 as output because it is a shared variable and we might get an inconsistent value
            because there is a possiblity let say thread # 1,2 reaches here to print the shared value however thread 3,4 are still busy 
            incrementing the values inside the loop and therefore we may get inconsistent output. By incrementing the wait time inside the 
-           loop we can make it consistent but still there's a possibility of inconsistent output.
+           loop we can make it consistent but still there's a possibility of inconsistent output because the variable is shared.
         */
         printf(" Shared Value :  %d      Using Thread_Id : %d \n", Shared_Variable,Thread_Id);
     }
