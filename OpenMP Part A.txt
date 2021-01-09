@@ -11,7 +11,7 @@ int main()
            We do not know how much threads will be created it depends on the threadnum environmental variable of the system whatever the value
            this environmental variable contains, those number of threads are created by default at the start of any parallel region.
         */
-        int Thread_ID , Total_Threads;
+        int Thread_ID , Total_Threads; // variables created inside a parallel region are private/local to the thread.
         Total_Threads = omp_get_num_threads() ; // returns the total number of threads that are currently executing the code.
         Thread_ID = omp_get_thread_num(); // returns the thread number/thread_id of current(this) thread.
 
